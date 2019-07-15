@@ -110,35 +110,48 @@ SOFTWARE.
 			document.getElementById("Code").innerHTML = "Generating code...";
 			console.log("Hypotenuse: " + Hypotenuse);
 
-			document.getElementById("Code").innerHTML = "Go to: <br><br>";
-			/*//start at X(0) Z (InitZ+(1/2 D))
-			document.getElementById("Code").innerHTML += "X0 Z" + Convert2Gcode(Ball.InitZ + (D / 2) + R) + " <br>";*/
-			//work up to X(D) Z(InitZ)
+			document.getElementById("Code").innerHTML = "Points: <br><br>";
 			var CurrentX;
-			var EndDeg = Math.acos(End / (D / 2)) * rad2deg;
-			for (var i = 0; i < 90; i += Step) {
+            var EndPosZ = Ball.InitZ - ((D/2)*(D/2)) - ((End/2)*(End/2));
+			var EndDeg = Math.asin(((End/2)+R) / Hypotenuse) * rad2deg;
+            var LineCount = 1;
+			for (var i = 0; i <= 90; i += Step) {
 				CurrentX = Math.sin(i * deg2rad) * Hypotenuse;
 
-				document.getElementById("Code").innerHTML += "X" + Convert2Gcode((CurrentX * 2) - (R*2)) + " Z" + Convert2Gcode(Ball.InitZ + Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) - R) + " <br>";
+                document.getElementById("Code").innerHTML += "<br>" + LineCount + ".   ";
+                LineCount++;
+                document.getElementById("Code").innerHTML += "X" + Convert2Gcode((CurrentX * 2) - (R*2));
+                document.getElementById("Code").innerHTML += "<br>..     ";
+				document.getElementById("Code").innerHTML += "Z" + Convert2Gcode(Ball.InitZ + Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) - R) + " <br>";
 
 				console.log("i: " + i);
-				console.log("CurrentX: " + CurrentX);
+				console.log("X: " + CurrentX);
 				console.log("Z: " + (Ball.InitZ + Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) - (R*2)));
 				console.log("EndDeg: " + EndDeg);
 			}
-			for (var i = 90; i+Step < 180-EndDeg; i += Step) {
+            document.getElementById("Code").innerHTML += "<br><br>(90°)<br>"
+
+			for (var i = 90; i < 180-EndDeg; i += Step) {
 				CurrentX = Math.sin(i * deg2rad) * Hypotenuse;
 
-				document.getElementById("Code").innerHTML += "X" + Convert2Gcode((CurrentX * 2) - (R*2)) + " Z" + Convert2Gcode(Ball.InitZ - Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) + R) + " <br>";
+                document.getElementById("Code").innerHTML += "<br>" + LineCount + ".   ";
+                LineCount++;
+                document.getElementById("Code").innerHTML += "Z" + Convert2Gcode(Ball.InitZ - Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) + R);
+                document.getElementById("Code").innerHTML += "<br>..     ";
+				document.getElementById("Code").innerHTML += "X" + Convert2Gcode((CurrentX * 2) - (R*2)) + " <br>";
 
 				console.log("i: " + i);
-				console.log("CurrentX: " + CurrentX);
-				console.log("Z = " + (Ball.InitZ + Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) - (R*2)));
+				console.log("X: " + CurrentX);
+				console.log("Z: " + (Ball.InitZ + Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) - (R*2)));
 			}
 			//go to end thickness degrees
 			CurrentX = Math.sin((180-EndDeg) * deg2rad) * Hypotenuse;
-			document.getElementById("Code").innerHTML += "<br>(Finish)<br>"
-			document.getElementById("Code").innerHTML += "X" + Convert2Gcode((CurrentX * 2) - (R*2)) + " Z" + Convert2Gcode(Ball.InitZ - Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) - R);
+			document.getElementById("Code").innerHTML += "<br><br>(Finish)<br>";
+            document.getElementById("Code").innerHTML += "<br>" + LineCount + ".   ";
+            LineCount++;
+            document.getElementById("Code").innerHTML += "Z" + Convert2Gcode(Ball.InitZ - Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) - R);
+            document.getElementById("Code").innerHTML += "<br>..     ";
+			document.getElementById("Code").innerHTML += "X" + Convert2Gcode(End);
 		}
 		function SetBallDiameter(){
 			var Diameter = parseFloat(prompt("Diameter (in mm, e.g. 30):",Ball.Diameter));
