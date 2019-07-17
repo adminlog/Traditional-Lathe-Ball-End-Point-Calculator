@@ -1,0 +1,220 @@
+<!--
+MIT License
+
+Copyright (c) 2019 Anthony Reimche
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+	<head>
+	<meta charset="utf-8">
+	<title></title>
+	<style>
+		body{background-color:#EEEEEE;}
+		div{
+		font-family:courier;
+			text-align: center;
+		}
+		button{
+		font-family:courier;
+		background-color: #555555;
+		border: none;
+		color: white;
+		padding: 15px 32px;
+		text-align: center;
+		text-decoration: none;
+		display: inline-block;
+		font-size: 16px;
+		}
+	</style>
+	</head>
+	<body>
+		<!--<a href="https://adminlog.github.io/Threading-Calculator/v1.7_zh.html" style="text-align: right; margin-right: 30px; margin-top: 50px; font-family: sans" lang="zh">中文</a>--!>
+		<div>
+		<h1 style="margin-top:80px">Traditional Lathe Ball End Point Calculator</h1>
+		<h2 style="margin-top:30px">Created by Anthony Reimche<br>V1.1</h2>
+		<p>Generates the points for creating a ball end on a traditional lathe.<br><br>Copyright (c) 2019 Anthony Reimche</p>
+	</div>
+    <div>
+        <!--<img src="" alt="Diagram">--!>
+    </div>
+	<div style="margin-top:80px">
+		<h2>Ball</h2>
+		<p style="color: #808080">Description of the Ball End.</p>
+		<button onclick="SetBallDiameter()" id="NewBallDiameter">Ball Diameter = 30mm</button>
+		<br><br>
+		<button onclick="SetEndDiameter()" id="NewEndDiameter">End Diameter = 10mm</button>
+		<br><br>
+		<button onclick="SetInitPos()" id="NewInitPos">Z Position of Ball = Z0 (Origin)</button>
+		<br><br>
+		<h2>Tool</h2>
+		<p style="color: #808080">Description of the Tool.</p>
+		<button onclick="SetToolRadius()" id="NewToolRadius">Tool Radius = 2mm</button>
+		<br><br>
+		<h2>Safety</h2>
+		<p style="color: #CC8080">Changes to these settings can adversely affect the program.</p>
+		<button onclick="SetSettingsStep()" id="NewSettingsStep">Step = 2°</button>
+		<br><br><br><br><br>
+		<button onclick="Calculate()" id="Submit" style="background-color: #f44336">Calculate</button>
+		<br><br><br><br>
+		<p style="margin-top:30px" id="MajorDiameter"></p>
+		<p style="margin-top:30px" id="CuttingSpeed"></p>
+	</div>
+	<div style="margin-top:50px; margin-bottom:200px; margin-left: 30%; text-align:left">
+		<p style="margin-top:10px" id="Code"></p>
+	</div>
+	<script type="text/javascript">
+		var Ball = {
+			Diameter:30,
+			End:10,
+			InitX:0,
+			InitZ:0,
+		};
+		var Tool = {
+			Radius:2,
+		};
+		var Settings = {
+			Step:2,
+		}
+		function Calculate(){
+			var D = Ball.Diameter;
+			var End = Ball.End;
+			var R = Tool.Radius;
+			var Step = Settings.Step;
+			var InitZ = Ball.InitZ - (D/2);
+
+			var Hypotenuse = (D/2) + R;
+
+			var rad2deg = 180 / Math.PI;
+			var deg2rad = Math.PI / 180;
+
+			console.log("---------- Calculate() ----------");
+
+			document.getElementById("Code").style.color = "black";
+			document.getElementById("Code").innerHTML = "Generating code...";
+			console.log("Hypotenuse: " + Hypotenuse);
+
+			document.getElementById("Code").innerHTML = "Points: <br><br>";
+			var CurrentX;
+            var EndPosZ = InitZ - ((D/2)*(D/2)) - ((End/2)*(End/2));
+			var EndDeg = Math.asin(((End/2)+R) / Hypotenuse) * rad2deg;
+            var LineCount = 1;
+			for (var i = 0; i <= 90; i += Step) {
+				CurrentX = Math.sin(i * deg2rad) * Hypotenuse;
+
+                document.getElementById("Code").innerHTML += "<br>" + LineCount + ".   ";
+                LineCount++;
+                document.getElementById("Code").innerHTML += "X" + Convert2Gcode((CurrentX * 2)/* - (R*2)*/);
+                document.getElementById("Code").innerHTML += "<br>..     ";
+				document.getElementById("Code").innerHTML += "Z" + Convert2Gcode(InitZ + Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX))/* - R*/) + " <br>";
+
+				console.log("i: " + i);
+				console.log("X: " + CurrentX);
+				console.log("Z: " + (InitZ + Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) - (R*2)));
+				console.log("EndDeg: " + EndDeg);
+			}
+            document.getElementById("Code").innerHTML += "<br><br>(90°)<br>"
+
+			for (var i = 90; i < 180-EndDeg; i += Step) {
+				CurrentX = Math.sin(i * deg2rad) * Hypotenuse;
+
+                document.getElementById("Code").innerHTML += "<br>" + LineCount + ".   ";
+                LineCount++;
+                document.getElementById("Code").innerHTML += "Z" + Convert2Gcode(InitZ - Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX))/* + R*/);
+                document.getElementById("Code").innerHTML += "<br>..     ";
+				document.getElementById("Code").innerHTML += "X" + Convert2Gcode((CurrentX * 2)/* - (R*2)*/) + " <br>";
+
+				console.log("i: " + i);
+				console.log("X: " + CurrentX);
+				console.log("Z: " + (InitZ + Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX)) - (R*2)));
+			}
+			//go to End Diameter degrees
+			CurrentX = Math.sin((180-EndDeg) * deg2rad) * Hypotenuse;
+			document.getElementById("Code").innerHTML += "<br><br>(Finish)<br>";
+            document.getElementById("Code").innerHTML += "<br>" + LineCount + ".   ";
+            LineCount++;
+            document.getElementById("Code").innerHTML += "Z" + Convert2Gcode(InitZ - Math.sqrt((Hypotenuse*Hypotenuse) - (CurrentX*CurrentX))/* - R*/);
+            document.getElementById("Code").innerHTML += "<br>..     ";
+			document.getElementById("Code").innerHTML += "X" + Convert2Gcode(End + R);
+		}
+		function SetBallDiameter(){
+			var Diameter = parseFloat(prompt("Diameter (in mm, e.g. 30):",Ball.Diameter));
+			while(isNaN(Diameter)){
+				Diameter = parseFloat(prompt("Diameter must be a number:",Ball.Diameter));
+			}
+			if(Diameter != null){
+				Ball.Diameter = Diameter;
+				document.getElementById("NewBallDiameter").innerHTML = "Ball Diameter = " + Ball.Diameter + "mm";
+			}
+		}
+		function SetEndDiameter(){
+			var End = parseFloat(prompt("Diameter (in mm, e.g. 10):",Ball.End));
+			while(isNaN(End)){
+			End = parseFloat(prompt("Treads must be a number:",Ball.End));
+			}
+			if(End != null){
+			Ball.End = End;
+			document.getElementById("NewEndDiameter").innerHTML = "End Diameter " + Ball.End + "mm";
+			}
+		}
+		function SetToolRadius(){
+			var Radius = parseFloat(prompt("Radius (in mm, e.g. 2):",Tool.Radius));
+			while(isNaN(Radius)){
+			Radius = parseFloat(prompt("Radius must be a number:",Tool.Radius));
+			}
+			if(Radius != null){
+			Tool.Radius = Radius;
+			document.getElementById("NewToolRadius").innerHTML = "Tool Radius = " + Tool.Radius + "mm";
+			}
+		}
+		function SetSettingsStep(){
+			var Step = parseFloat(prompt("Step (in degrees, e.g. 2):",Settings.Step));
+			while(isNaN(Step)){
+			Step = parseFloat(prompt("Step must be a number:",Settings.Step));
+			}
+			if(Step != null){
+			Settings.Step = Step;
+			document.getElementById("NewSettingsStep").innerHTML = "Step = " + Settings.Step + "°";
+			}
+		}
+		function SetInitPos(){
+			var initZ = parseFloat(prompt("Z Position of Ball:",Ball.InitZ));
+			while(isNaN(initZ)){
+			initZ = parseFloat(prompt("Position must be a number:",Ball.InitZ));
+			}
+			if(initZ != null){
+			Ball.InitZ = initZ;
+			}
+			if(Ball.InitZ == 0){
+				document.getElementById("NewInitPos").innerHTML = "Z Position of Ball = " + Ball.InitZ + " (Origin)";
+			}else{
+				document.getElementById("NewInitPos").innerHTML = "Z Position of Ball = " + Ball.InitZ;
+			}
+		}
+		function Convert2Gcode(rawNum){
+			if(rawNum % 1 == 0){
+				return (rawNum + ".");
+			}else{
+				return (Math.floor(rawNum * 1000) / 1000).toString();
+			}
+		}
+	</script>
+	</body>
+</html>
